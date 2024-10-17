@@ -268,12 +268,12 @@ const Home = () => {
           />
           <button
             onClick={handleSwap}
-            disabled={!isClient || !wallet.connected || sellAmount <= 0}
+            disabled={true}
             className="w-full bg-blue-500 text-white p-3 rounded-xl font-bold hover:bg-blue-600 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
           >
             {isClient
               ? wallet.connected
-                ? "Swap"
+                ? "Insufficient Funds"
                 : "Connect Wallet"
               : "Loading..."}
           </button>
@@ -282,8 +282,8 @@ const Home = () => {
         {isClient && quoteResponse && (
           <div className="mt-4 text-center">
             <p>
-              Exchange Rate: 1 {sellToken?.symbol} ≈ {buyAmount}{" "}
-              {buyToken?.symbol}
+              Exchange Rate: 1 {sellToken?.symbol} ≈{" "}
+              {parseInt(buyAmount / sellAmount)} {buyToken?.symbol}
             </p>
           </div>
         )}
