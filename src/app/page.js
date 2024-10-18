@@ -7,7 +7,7 @@ import { ArrowUpDown, ChevronDown, Settings, Github } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
-import gibleUrl from "../public/gible.png";
+
 const WalletMultiButton = dynamic(
   () =>
     import("@solana/wallet-adapter-react-ui").then(
@@ -28,6 +28,9 @@ const Home = () => {
   const [slippage, setSlippage] = useState(1);
   const [isClient, setIsClient] = useState(false);
   const [isSlippageModalOpen, setIsSlippageModalOpen] = useState(false);
+  const [tokenPrices, setTokenPrices] = useState({});
+  const [buyTokenUSD, setBuyTokenUSD] = useState(null);
+  const [sellTokenUSD, setSellTokenUSD] = useState(null);
 
   const wallet = useWallet();
 
@@ -50,9 +53,18 @@ const Home = () => {
   };
 
   const handleCalculateOutAmts = (amt, token) => {
+    // Special handling for USDC and USDT on Solana
+    if (
+      (token.symbol === "USDC" || token.symbol === "USDT") &&
+      token.address.startsWith("EPj")
+    ) {
+      return amt / Math.pow(10, 6);
+    }
+    // For all other tokens, use the token's decimals
     return amt / Math.pow(10, token.decimals);
   };
 
+  // Usage in fetchQuoteResponse
   const fetchQuoteResponse = useCallback(async () => {
     if (!sellToken || !buyToken || !sellAmount) return;
 
@@ -61,7 +73,7 @@ const Home = () => {
     const apiUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${
       sellToken.address
     }&outputMint=${buyToken.address}&amount=${Math.floor(
-      parsedSellAmount * LAMPORTS_PER_SOL
+      parsedSellAmount * Math.pow(10, sellToken.decimals)
     )}&slippageBps=${slippageBps}`;
 
     try {
@@ -70,6 +82,7 @@ const Home = () => {
         console.log(response.data);
         const quoteData = response.data;
         setQuoteResponse(quoteData);
+        console.log(quoteResponse);
 
         const outputAmount = handleCalculateOutAmts(
           quoteData.outAmount,
@@ -81,10 +94,19 @@ const Home = () => {
       console.error("Error fetching quote:", error);
     }
   }, [sellToken, buyToken, sellAmount, slippage]);
-
+  async function fetchUsdPrices(token) {
+    const response = await axios.get(
+      `https://api.jup.ag/price/v2?ids=${token.address}`
+    );
+    if (token == buyToken)
+      setBuyTokenUSD(response.data.data[token.address].price);
+    else setSellTokenUSD(response.data.data[token.address].price);
+  }
   useEffect(() => {
     if (isClient) {
       fetchQuoteResponse();
+      fetchUsdPrices(sellToken);
+      fetchUsdPrices(buyToken);
     }
   }, [fetchQuoteResponse, isClient]);
 
@@ -135,6 +157,16 @@ const Home = () => {
           }}
           readOnly={label === "You're Buying"}
         />
+
+        {selectedToken === buyToken ? (
+          <p className="text-lg font-bold text-green-600">
+            ${buyTokenUSD.toLocaleString()}
+          </p>
+        ) : (
+          <p className="text-lg font-bold text-red-600">
+            ${sellTokenUSD.toLocaleString()}
+          </p>
+        )}
       </div>
       {isClient && isOpen && (
         <div className="absolute z-10 mt-2 w-full max-w-[12rem] max-h-40 overflow-auto bg-gray-800 border border-gray-700 rounded-md shadow-lg">
@@ -320,6 +352,7 @@ const Home = () => {
           </div>
         </div>
       </div>
+
       <SlippageModal />
     </div>
   );
