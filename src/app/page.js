@@ -158,15 +158,15 @@ const Home = () => {
           readOnly={label === "You're Buying"}
         />
 
-        {selectedToken === buyToken ? (
+        {selectedToken === buyToken && buyTokenUSD ? (
           <p className="text-lg font-bold text-green-600">
             ${buyTokenUSD.toLocaleString()}
           </p>
-        ) : (
+        ) : selectedToken !== buyToken && sellTokenUSD ? (
           <p className="text-lg font-bold text-red-600">
             ${sellTokenUSD.toLocaleString()}
           </p>
-        )}
+        ) : null}
       </div>
       {isClient && isOpen && (
         <div className="absolute z-10 mt-2 w-full max-w-[12rem] max-h-40 overflow-auto bg-gray-800 border border-gray-700 rounded-md shadow-lg">
