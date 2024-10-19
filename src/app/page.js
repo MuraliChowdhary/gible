@@ -7,6 +7,9 @@ import { ArrowUpDown, ChevronDown, Settings, Github } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import MarketCap from "@/components/MarketCap";
 
 const WalletMultiButton = dynamic(
   () =>
@@ -31,6 +34,7 @@ const Home = () => {
   const [tokenPrices, setTokenPrices] = useState({});
   const [buyTokenUSD, setBuyTokenUSD] = useState(null);
   const [sellTokenUSD, setSellTokenUSD] = useState(null);
+  const [userBalance, setUserBalance] = useState(false);
 
   const wallet = useWallet();
 
@@ -38,6 +42,9 @@ const Home = () => {
     setIsClient(true);
     fetchTokens();
   }, []);
+  useEffect(() => {
+    checkUserBalance(sellToken);
+  }, [sellToken]);
 
   const fetchTokens = async () => {
     try {
@@ -51,6 +58,31 @@ const Home = () => {
       console.error("Error fetching tokens:", error);
     }
   };
+  const checkTokenBalance = async (sellToken) => {
+    try {
+      const tokenAccountAddress = await getAssociatedTokenAddress(
+        new PublicKey(sellToken.address),
+        walletPublicKey
+      );
+
+      const tokenAccountInfo = await getAccount(
+        connection,
+        tokenAccountAddress
+      );
+
+      const balanceInTokens =
+        Number(tokenAccountInfo.amount) / Math.pow(10, sellToken.decimals);
+
+      return balanceInTokens;
+    } catch (error) {
+      console.error("Error fetching token balance:", error);
+      return 0;
+    }
+  };
+  async function checkUserBalance(token) {
+    const userBalance = await checkTokenBalance(wallet.publicKey, sellToken);
+    console.log(userBalance);
+  }
 
   const handleCalculateOutAmts = (amt, token) => {
     // Special handling for USDC and USDT on Solana
@@ -111,8 +143,74 @@ const Home = () => {
   }, [fetchQuoteResponse, isClient]);
 
   const handleSwap = async () => {
-    console.log("Swap initiated");
-    // Implement the actual swap logic here
+    if (
+      !sellToken ||
+      !buyToken ||
+      !wallet.publicKey ||
+      !wallet.signTransaction
+    ) {
+      toast.error("Please select valid tokens and connect wallet.");
+      return;
+    }
+
+    if (
+      parseFloat(sellToken.balance) <= 0 ||
+      parseFloat(sellAmount) > parseFloat(sellToken.balance)
+    ) {
+      toast.error("Insufficient balance to perform the swap.");
+      return;
+    }
+
+    try {
+      // Fetch the quote response for the swap
+      const quoteResponse = await fetchQuoteResponse();
+
+      if (!quoteResponse) {
+        toast.error("Unable to fetch quote for the swap.");
+        return;
+      }
+
+      // Request the swap transaction from Jupiter API
+      const {
+        data: { swapTransaction },
+      } = await axios.post("https://quote-api.jup.ag/v6/swap", {
+        quoteResponse,
+        userPublicKey: wallet.publicKey.toString(),
+        wrapAndUnwrapSol: true,
+      });
+
+      // Deserialize the swap transaction from base64
+      const swapTransactionBuf = Buffer.from(swapTransaction, "base64");
+      const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+
+      // Sign the transaction with the connected wallet
+      const signedTransaction = await wallet.signTransaction(transaction);
+
+      // Serialize the signed transaction
+      const rawTransaction = signedTransaction.serialize();
+
+      // Send the signed transaction to the Solana blockchain
+      const txid = await connection.sendRawTransaction(rawTransaction, {
+        skipPreflight: true,
+        maxRetries: 2,
+      });
+
+      // Confirm the transaction
+      const latestBlockHash = await connection.getLatestBlockhash();
+      await connection.confirmTransaction(
+        {
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+          signature: txid,
+        },
+        "confirmed"
+      );
+
+      toast.success(`Transaction successful: https://solscan.io/tx/${txid}`);
+    } catch (error) {
+      toast.error("Error signing or sending the transaction");
+      console.error("Error signing or sending the transaction:", error);
+    }
   };
 
   const TokenSelector = ({
@@ -263,98 +361,104 @@ const Home = () => {
   );
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 text-white flex justify-center items-center p-4">
-      <div className="max-w-6xl w-full bg-gray-900 rounded-2xl p-8 shadow-lg flex flex-col md:flex-row">
-        {/* Left side: Swap interface */}
-        <div className="w-full md:w-1/2 md:pr-8 mb-8 md:mb-0">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">Gible Swap</h1>
-            <div className="flex items-center gap-4">
-              {isClient && <WalletMultiButton />}
-              <a
-                href="https://github.com/YadlaMani/gible"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="w-6 h-6 text-white hover:text-gray-300 transition-colors" />
-              </a>
-            </div>
-          </div>
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Settings
-                  className="w-5 h-5 cursor-pointer text-gray-400 hover:text-white transition-colors"
-                  onClick={() => setIsSlippageModalOpen(true)}
-                />
-                <span className="text-sm text-gray-400">
-                  Slippage: {slippage}%
-                </span>
+    <>
+      <div className="w-full min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 text-white flex justify-center items-center p-4">
+        <ToastContainer />
+        <div className="max-w-6xl w-full bg-gray-900 rounded-2xl p-8 shadow-lg flex flex-col md:flex-row">
+          {/* Left side: Swap interface */}
+          <div className="w-full md:w-1/2 md:pr-8 mb-8 md:mb-0">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-bold">Gible Swap</h1>
+              <div className="flex items-center gap-4">
+                {isClient && <WalletMultiButton />}
+                <a
+                  href="https://github.com/YadlaMani/gible"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="w-6 h-6 text-white hover:text-gray-300 transition-colors" />
+                </a>
               </div>
             </div>
-            <TokenSelector
-              isOpen={isSellingOpen}
-              setIsOpen={setIsSellingOpen}
-              selectedToken={sellToken}
-              setSelectedToken={setSellToken}
-              label="You're Selling"
-            />
-            <div className="flex justify-center">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Settings
+                    className="w-5 h-5 cursor-pointer text-gray-400 hover:text-white transition-colors"
+                    onClick={() => setIsSlippageModalOpen(true)}
+                  />
+                  <span className="text-sm text-gray-400">
+                    Slippage: {slippage}%
+                  </span>
+                </div>
+              </div>
+              <TokenSelector
+                isOpen={isSellingOpen}
+                setIsOpen={setIsSellingOpen}
+                selectedToken={sellToken}
+                setSelectedToken={setSellToken}
+                label="You're Selling"
+              />
+              <div className="flex justify-center">
+                <button
+                  onClick={() => {
+                    const temp = sellToken;
+                    setSellToken(buyToken);
+                    setBuyToken(temp);
+                  }}
+                  className="bg-gray-800 p-2 rounded-full hover:bg-gray-700 transition-colors"
+                >
+                  <ArrowUpDown className="w-5 h-5" />
+                </button>
+              </div>
+              <TokenSelector
+                isOpen={isBuyingOpen}
+                setIsOpen={setIsBuyingOpen}
+                selectedToken={buyToken}
+                setSelectedToken={setBuyToken}
+                label="You're Buying"
+              />
               <button
-                onClick={() => {
-                  const temp = sellToken;
-                  setSellToken(buyToken);
-                  setBuyToken(temp);
-                }}
-                className="bg-gray-800 p-2 rounded-full hover:bg-gray-700 transition-colors"
+                onClick={handleSwap}
+                disabled={!wallet.connected || userBalance < sellAmount}
+                className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"
               >
-                <ArrowUpDown className="w-5 h-5" />
+                {isClient
+                  ? wallet.connected
+                    ? userBalance >= sellAmount
+                      ? "Swap"
+                      : "Insufficient funds"
+                    : "Connect Wallet"
+                  : "Loading..."}
               </button>
             </div>
-            <TokenSelector
-              isOpen={isBuyingOpen}
-              setIsOpen={setIsBuyingOpen}
-              selectedToken={buyToken}
-              setSelectedToken={setBuyToken}
-              label="You're Buying"
-            />
-            <button
-              onClick={handleSwap}
-              disabled={true}
-              className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"
-            >
-              {isClient
-                ? wallet.connected
-                  ? "Insufficient Balance"
-                  : "Connect Wallet"
-                : "Loading..."}
-            </button>
+            {isClient && quoteResponse && (
+              <div className="mt-4 text-center text-gray-400">
+                <p>
+                  Exchange Rate: 1 {sellToken?.symbol} ≈{" "}
+                  {parseFloat(buyAmount / sellAmount).toFixed(6)}{" "}
+                  {buyToken?.symbol}
+                </p>
+              </div>
+            )}
           </div>
-          {isClient && quoteResponse && (
-            <div className="mt-4 text-center text-gray-400">
-              <p>
-                Exchange Rate: 1 {sellToken?.symbol} ≈{" "}
-                {parseFloat(buyAmount / sellAmount).toFixed(6)}{" "}
-                {buyToken?.symbol}
-              </p>
+
+          {/* Right side: Gible image */}
+          <div className="w-full md:w-1/2 flex items-center justify-center">
+            <div className="bg-gray-800 rounded-xl p-4 w-full h-full flex items-center justify-center overflow-hidden">
+              <img
+                src="https://d.furaffinity.net/art/thundurburd/1566605711/1566605711.thundurburd_gible_bounce.gif"
+                alt="Gible"
+                className="w-full h-full object-cover rounded-lg"
+              />
             </div>
-          )}
-        </div>
-
-        {/* Right side: Gible image */}
-        <div className="w-full md:w-1/2 flex items-center justify-center">
-          <div className="bg-gray-800 rounded-xl p-4 w-full h-full flex items-center justify-center overflow-hidden">
-            <img
-              src="https://d.furaffinity.net/art/thundurburd/1566605711/1566605711.thundurburd_gible_bounce.gif"
-              alt="Gible"
-              className="w-full h-full object-cover rounded-lg"
-            />
           </div>
         </div>
-      </div>
 
-      <SlippageModal />
-    </div>
+        <SlippageModal />
+      </div>
+      <MarketCap />
+    </>
   );
 };
 
