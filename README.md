@@ -86,4 +86,4 @@ Gible is a comprehensive web application built on Next.js, leveraging the Jupite
 
 
 
-Happy trading with Gible!
+
