@@ -1,3 +1,84 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%; /* Light background */
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%; /* Light card */
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 30%;
+    --primary-foreground: 255 255% 100%;
+    --secondary: 0 0% 60%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 80%;
+    --muted-foreground: 0 0% 60%;
+    --destructive: 0 0% 100%;
+    --destructive-foreground: 0 0% 80%;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 0 0% 10%; /* Dark background */
+      --foreground: 0 0% 100%;
+      --card: 0 0% 20%; /* Dark card */
+      --card-foreground: 0 0% 100%;
+      --popover: 0 0% 30%;
+      --popover-foreground: 0 0% 100%;
+      --primary: 0 0% 60%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 0 0% 80%;
+      --secondary-foreground: 0 0% 100%;
+      --muted: 0 0% 50%;
+      --muted-foreground: 0 0% 100%;
+      --destructive: 0 0% 100%;
+      --destructive-foreground: 0 0% 60%;
+    }
+  }
+}
+
+html {
+  background-color: #111827;
+  color: #fff;
+}
+
+@keyframes gradient-x {
+  0%,
+  100% {
+    background-size: 200% 200%;
+    background-position: left center;
+  }
+  50% {
+    background-size: 200% 200%;
+    background-position: right center;
+  }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 3s ease infinite;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 30s linear infinite;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
