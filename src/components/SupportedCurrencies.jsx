@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Coins } from "lucide-react";
 
 const supportedCurrencies = [
@@ -17,9 +17,13 @@ const supportedCurrencies = [
 
 export default function SupportedCurrencies() {
   const [count, setCount] = useState(0);
-  const targetNumber = 213;
+  const targetNumber = 400;
+  const containerRef = useRef(null);
+  const animationTriggeredRef = useRef(false);
   
-  useEffect(() => {
+  const startAnimation = () => {
+    setCount(0);
+    animationTriggeredRef.current = true;
     const duration = 2000; // 2 seconds
     const steps = 60;
     const increment = targetNumber / steps;
@@ -31,16 +35,38 @@ export default function SupportedCurrencies() {
       if (current >= targetNumber) {
         setCount(targetNumber);
         clearInterval(timer);
+        animationTriggeredRef.current = false;
       } else {
         setCount(Math.floor(current));
       }
     }, stepDuration);
 
     return () => clearInterval(timer);
+  };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !animationTriggeredRef.current) {
+          startAnimation();
+        }
+      },
+      { threshold: 0.1 } // Trigger when 10% of the element is visible
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
   }, []);
 
   return (
-    <div className="py-20 px-4 bg-[#192231]">
+    <div className="py-20 px-4 bg-[#192231]" ref={containerRef}>
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <div className="flex justify-center mb-4">
@@ -48,9 +74,9 @@ export default function SupportedCurrencies() {
               <Coins size={40} className="text-[#512DA8]" />
             </div>
           </div>
-          <h2 className="text-3xl font-bold mb-4 text-white">Supported Currencies</h2>
-          <div className="text-2xl font-bold text-[#512DA8] mb-4">
-            {count} currencies supported
+          <h2 className="text-4xl font-bold mb-4 text-white">Supported Currencies</h2>
+          <div className="text-3xl font-bold text-[#6237c8] mb-4">
+            {count}+ currencies supported
           </div>
           <p className="text-gray-400">Trade seamlessly between these popular cryptocurrencies</p>
         </div>
@@ -77,4 +103,3 @@ export default function SupportedCurrencies() {
     </div>
   );
 }
-
