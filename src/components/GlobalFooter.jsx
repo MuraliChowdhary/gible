@@ -1,7 +1,7 @@
 import { Globe } from "lucide-react";
 
 export const GlobalFooter = () => (
-  <div className="bg-[#192231] py-16 px-4 border-t border-gray-800">
+  <div className="bg-[#131b2c] py-16 px-4 border-t border-gray-800">
     <div className="max-w-4xl mx-auto text-center">
       <div className="flex justify-center mb-6">
         <div className="p-4 bg-[#512DA8]/20 rounded-full">

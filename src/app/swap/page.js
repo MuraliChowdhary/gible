@@ -45,6 +45,22 @@ const Swap = () => {
     checkUserBalance(sellToken);
   }, [sellToken]);
 
+  const toastOptions = {
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    style: {
+      background: "#2D3748", // Dark background
+      color: "#FFFFFF", // White text
+      borderRadius: "10px",
+      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    },
+  };
+
   const fetchTokens = async () => {
     try {
       const response = await axios.get(
@@ -148,7 +164,10 @@ const Swap = () => {
       !wallet.publicKey ||
       !wallet.signTransaction
     ) {
-      toast.error("Please select valid tokens and connect wallet.");
+      toast.error(
+        "Please select valid tokens and connect wallet.",
+        toastOptions
+      );
       return;
     }
 
@@ -156,7 +175,7 @@ const Swap = () => {
       parseFloat(sellToken.balance) <= 0 ||
       parseFloat(sellAmount) > parseFloat(sellToken.balance)
     ) {
-      toast.error("Insufficient balance to perform the swap.");
+      toast.error("Insufficient balance to perform the swap.", toastOptions);
       return;
     }
 
@@ -165,7 +184,7 @@ const Swap = () => {
       const quoteResponse = await fetchQuoteResponse();
 
       if (!quoteResponse) {
-        toast.error("Unable to fetch quote for the swap.");
+        toast.error("Unable to fetch quote for the swap.", toastOptions);
         return;
       }
 
@@ -205,9 +224,12 @@ const Swap = () => {
         "confirmed"
       );
 
-      toast.success(`Transaction successful: https://solscan.io/tx/${txid}`);
+      toast.success(
+        `Transaction successful: https://solscan.io/tx/${txid}`,
+        toastOptions
+      );
     } catch (error) {
-      toast.error("Error signing or sending the transaction");
+      toast.error("Error signing or sending the transaction", toastOptions);
       console.error("Error signing or sending the transaction:", error);
     }
   };
@@ -356,7 +378,18 @@ const Swap = () => {
   return (
     <>
       <div className="w-full min-h-screen bg-gradient-to-r pt-24 from-gray-900 to-gray-800 text-white flex justify-center items-center p-4">
-        <ToastContainer />
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
         <div className="max-w-6xl md:w-1/2 w-full bg-gray-900 rounded-2xl p-8 shadow-lg flex flex-col md:flex-row md:justify-center md:items-center">
           {/* Left side: Swap interface */}
           <div className="w-full  md:pr-8 mb-8 md:mb-0">
@@ -412,7 +445,7 @@ const Swap = () => {
               <button
                 onClick={handleSwap}
                 disabled={!wallet.connected || userBalance < sellAmount}
-                className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed">
+                className="w-full bg-[#158a88] text-white p-3 rounded-xl font-bold hover:bg-[#288180] transition-colors disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed">
                 {isClient
                   ? wallet.connected
                     ? userBalance >= sellAmount
