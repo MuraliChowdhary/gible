@@ -106,108 +106,112 @@ const MarketCap = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredData.map((item) => (
-            <Card 
-              key={item.id} 
-              className="hover:shadow-lg transition-shadow duration-200 bg-[#192231] border-[#1F2937] hover:border-[#512DA8]"
-            >
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={item.logo || placeholderImage}
-                      alt={`${item.name} logo`}
-                      className="w-12 h-12 rounded-full bg-[#1F2937]"
-                    />
-                    <div>
-                      <CardTitle className="text-xl text-white">{item.name}</CardTitle>
-                      <Badge variant="secondary" className="mt-1 bg-[#1F2937] text-gray-300">
-                        {item.symbol}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div
-                    className={`flex items-center gap-1 text-lg font-medium ${
-                      item.price_change_24h >= 0 ? 'text-green-400' : 'text-red-400'
-                    }`}
-                  >
-                    {item.price_change_24h >= 0 ? (
-                      <ArrowUpRight className="h-5 w-5" />
-                    ) : (
-                      <ArrowDownRight className="h-5 w-5" />
-                    )}
-                    {Math.abs(item.price_change_24h)}%
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="bg-[#1F2937] p-3 rounded-lg">
-                    <h3 className="font-semibold mb-2 text-sm text-gray-400">
-                      Trending Score
-                    </h3>
-                    <div className="w-full bg-[#111827] rounded-full h-2.5">
-                      <div
-                        className="bg-[#512DA8] h-2.5 rounded-full"
-                        style={{ width: `${Math.min(item.trending_score * 100, 100)}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-right text-sm mt-1 text-gray-300">
-                      {item.trending_score.toFixed(2)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2 text-sm text-gray-400">
-                      Available on
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {item.platforms.map((platform, index) => (
-                        <Badge 
-                          key={index} 
-                          variant="outline"
-                          className="border-[#512DA8] text-gray-300 bg-[#1F2937]"
-                        >
-                          {platform.name}
+            // Ensuring valid price_change_24h and trending_score are displayed
+            item.price_change_24h !== null &&
+            item.price_change_24h !== undefined && (
+              <Card 
+                key={item.id} 
+                className="hover:shadow-lg transition-shadow duration-200 bg-[#192231] border-[#1F2937] hover:border-[#512DA8]"
+              >
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={item.logo || placeholderImage}
+                        alt={`${item.name} logo`}
+                        className="w-12 h-12 rounded-full bg-[#1F2937]"
+                      />
+                      <div>
+                        <CardTitle className="text-xl text-white">{item.name}</CardTitle>
+                        <Badge variant="secondary" className="mt-1 bg-[#1F2937] text-gray-300">
+                          {item.symbol}
                         </Badge>
-                      ))}
+                      </div>
                     </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2 text-sm text-gray-400">
-                      Contracts
-                    </h3>
                     <div
-                      className={`max-h-24 overflow-auto bg-[#1F2937] p-2 rounded-md transition-all duration-300 ${
-                        expandedCards[item.id] ? 'max-h-[400px]' : ''
+                      className={`flex items-center gap-1 text-lg font-medium ${
+                        item.price_change_24h >= 0 ? 'text-green-400' : 'text-red-400'
                       }`}
                     >
-                      {item.contracts.map((contract, index) => (
-                        <div key={index} className="p-2">
-                          <p className="text-xs font-mono text-gray-300">
-                            {contract.address.slice(0, 6)}...{contract.address.slice(-4)}
-                          </p>
-                          <Badge 
-                            variant="secondary" 
-                            className="mt-1 bg-[#111827] text-gray-300"
-                          >
-                            {contract.blockchain}
-                          </Badge>
-                        </div>
-                      ))}
+                      {item.price_change_24h >= 0 ? (
+                        <ArrowUpRight className="h-5 w-5" />
+                      ) : (
+                        <ArrowDownRight className="h-5 w-5" />
+                      )}
+                      {Math.abs(item.price_change_24h)}%
                     </div>
-                    {item.contracts.length > 2 && (
-                      <button
-                        onClick={() => toggleExpandCard(item.id)}
-                        className="text-[#512DA8] hover:text-[#512DA8]/80 mt-2 transition-colors"
-                      >
-                        {expandedCards[item.id] ? 'Show Less' : 'Read More'}
-                      </button>
-                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="bg-[#1F2937] p-3 rounded-lg">
+                      <h3 className="font-semibold mb-2 text-sm text-gray-400">
+                        Trending Score
+                      </h3>
+                      <div className="w-full bg-[#111827] rounded-full h-2.5">
+                        <div
+                          className="bg-[#512DA8] h-2.5 rounded-full"
+                          style={{ width: `${Math.min((item.trending_score || 0) * 100, 100)}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-right text-sm mt-1 text-gray-300">
+                        {item.trending_score ? item.trending_score.toFixed(2) : 'N/A'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold mb-2 text-sm text-gray-400">
+                        Available on
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {item.platforms.map((platform, index) => (
+                          <Badge 
+                            key={index} 
+                            variant="outline"
+                            className="border-[#512DA8] text-gray-300 bg-[#1F2937]"
+                          >
+                            {platform.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold mb-2 text-sm text-gray-400">
+                        Contracts
+                      </h3>
+                      <div
+                        className={`max-h-24 overflow-auto bg-[#1F2937] p-2 rounded-md transition-all duration-300 ${
+                          expandedCards[item.id] ? 'max-h-[400px]' : ''
+                        }`}
+                      >
+                        {item.contracts.map((contract, index) => (
+                          <div key={index} className="p-2">
+                            <p className="text-xs font-mono text-gray-300">
+                              {contract.address.slice(0, 6)}...{contract.address.slice(-4)}
+                            </p>
+                            <Badge 
+                              variant="secondary" 
+                              className="mt-1 bg-[#111827] text-gray-300"
+                            >
+                              {contract.blockchain}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                      {item.contracts.length > 2 && (
+                        <button
+                          onClick={() => toggleExpandCard(item.id)}
+                          className="text-[#512DA8] hover:text-[#512DA8]/80 mt-2 transition-colors"
+                        >
+                          {expandedCards[item.id] ? 'Show Less' : 'Read More'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
           ))}
         </div>
 

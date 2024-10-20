@@ -229,7 +229,7 @@ const Swap = () => {
             {isClient && selectedToken && (
               <img
                 src={selectedToken.logoURI}
-                className="w-6 h-6 rounded-full"
+                className="w-10 h-10 rounded-full"
                 alt={selectedToken.symbol}
               />
             )}
@@ -255,11 +255,11 @@ const Swap = () => {
             readOnly={label === "You're Buying"}
           />
           {selectedToken === buyToken && buyTokenUSD ? (
-            <p className="text-lg flex justify-end font-bold text-green-600 mt-2">
+            <p className="text-lg flex justify-end font-bold text-gray-600 mt-2">
               ${buyTokenUSD.toLocaleString()}
             </p>
           ) : selectedToken !== buyToken && sellTokenUSD ? (
-            <p className="text-lg flex justify-end font-bold text-red-600 mt-2">
+            <p className="text-lg flex justify-end font-bold text-gray-600 mt-2">
               ${sellTokenUSD.toLocaleString()}
             </p>
           ) : null}
@@ -278,7 +278,7 @@ const Swap = () => {
               <img
                 src={token.logoURI}
                 alt={token.symbol}
-                className="w-6 h-6 rounded-full mr-2"
+                className="w-10 h-10 rounded-full mr-2"
               />
               <span>{token.symbol}</span>
             </div>
@@ -355,11 +355,11 @@ const Swap = () => {
 
   return (
     <>
-      <div className="w-full min-h-screen bg-gradient-to-r from-gray-900 to-gray-800 text-white flex justify-center items-center p-4">
+      <div className="w-full min-h-screen bg-gradient-to-r pt-24 from-gray-900 to-gray-800 text-white flex justify-center items-center p-4">
         <ToastContainer />
-        <div className="max-w-6xl w-full bg-gray-900 rounded-2xl p-8 shadow-lg flex flex-col md:flex-row">
+        <div className="max-w-6xl md:w-1/2 w-full bg-gray-900 rounded-2xl p-8 shadow-lg flex flex-col md:flex-row md:justify-center md:items-center">
           {/* Left side: Swap interface */}
-          <div className="w-full md:pr-8 mb-8 md:mb-0">
+          <div className="w-full  md:pr-8 mb-8 md:mb-0">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold">Gible Swap</h1>
               <div className="flex items-center gap-4">
@@ -368,7 +368,7 @@ const Swap = () => {
                   href="https://github.com/YadlaMani/gible"
                   target="_blank"
                   rel="noopener noreferrer">
-                  <Github className="w-6 h-6 text-white hover:text-gray-300 transition-colors" />
+                  <Github className="w-10 h-10 text-white hover:text-gray-300 transition-colors" />
                 </a>
               </div>
             </div>
@@ -379,7 +379,7 @@ const Swap = () => {
                     className="w-5 h-5 cursor-pointer text-gray-400 hover:text-white transition-colors"
                     onClick={() => setIsSlippageModalOpen(true)}
                   />
-                  <span className="text-sm text-gray-400">
+                  <span className="text-lg text-gray-400">
                     Slippage: {slippage}%
                   </span>
                 </div>
